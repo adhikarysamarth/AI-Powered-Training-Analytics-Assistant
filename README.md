@@ -1,3 +1,6 @@
+<---Version 1.0 currently includes analytics dashboards,SQL-driven insights, and a natural-language query interface.
+Future releases will incorporate Azure OpenAI for dynamic natural-language-to-SQL generation and AI-powered insights.--->
+
 # AI-Powered Training Analytics Assistant
 
 ## Project Overview
