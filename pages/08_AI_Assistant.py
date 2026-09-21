@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-
 from utils.database import get_connection
 from utils.sql_resolver import resolve_question
 

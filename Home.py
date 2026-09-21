@@ -1,4 +1,6 @@
 import streamlit as st
+import pandas as pd
+from utils.database import get_connection
 
 st.set_page_config(
     page_title="AI-Powered Training Analytics Assistant",
@@ -6,10 +8,6 @@ st.set_page_config(
 )
 
 st.title("🏠 AI-Powered Training Analytics Assistant")
-
-import streamlit as st
-import pandas as pd
-from utils.database import get_connection
 
 conn = get_connection()
 
@@ -76,3 +74,6 @@ Interactive Dashboard
 Natural Language Analytics
 """)
 
+
+
+# python3 -m streamlit run "/Users/samarth/Library/CloudStorage/OneDrive-Personal/Samarth/Study Materials/Personal Projects/AI-Powered Training Analytics Assistant/Home.py"      

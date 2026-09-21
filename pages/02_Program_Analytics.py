@@ -10,11 +10,15 @@ st.title("Program Analytics")
 # Program Summary
 # ----------------------------------------
 
-program_df = pd.read_sql("""
-SELECT *
-FROM program_summary
-ORDER BY TotalStudents DESC
-""", conn)
+#program_df = pd.read_sql("""
+#SELECT *
+#FROM program_summary
+#ORDER BY TotalStudents DESC
+#""", conn)
+
+from utils.api_client import get_program_summary
+
+program_df = pd.DataFrame(get_program_summary())
 
 st.subheader("Program Performance Summary")
 
