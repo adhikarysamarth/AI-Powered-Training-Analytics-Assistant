@@ -1,13 +1,14 @@
-<---Version 1.0 currently includes analytics dashboards,SQL-driven insights, and a natural-language query interface.
-Future releases will incorporate Azure OpenAI for dynamic natural-language-to-SQL generation and AI-powered insights.--->
+> Version 1.0 currently includes a complete analytics platform featuring interactive dashboards, SQL-driven insights, a FastAPI backend, and a natural-language query interface.
+>
+> Future releases will incorporate Azure OpenAI, natural-language-to-SQL generation, AI-powered insights, Retrieval-Augmented Generation (RAG), and Azure cloud deployment.
 
 # AI-Powered Training Analytics Assistant
 
 ## Project Overview
 
-This project transforms student training and placement data into actionable business intelligence through SQL analytics, dashboards, and natural language queries.
+The AI-Powered Training Analytics Assistant is an end-to-end analytics platform designed to transform student training and placement data into actionable business insights.
 
-The solution allows users to analyze:
+The application combines data engineering, SQL analytics, interactive dashboards, business intelligence reporting, and a natural-language query interface to help users analyze:
 
 - Student Enrollment
 - Program Performance
@@ -15,6 +16,10 @@ The solution allows users to analyze:
 - Employment Placement
 - Funding Source Performance
 - Career Center Outcomes
+
+The project began as a traditional analytics dashboard and is gradually evolving into a fully AI-powered analytics platform capable of supporting natural-language analytics, AI agents, and intelligent business insights.
+
+---
 
 ## Dataset
 
@@ -31,6 +36,8 @@ Key Fields:
 - Completion Status
 - Career Center
 
+---
+
 ## Features
 
 ### Executive Dashboard
@@ -38,54 +45,67 @@ Key Fields:
 - Total Students
 - Completed Students
 - Placed Students
-- Revenue
-- Enrollment Trend
+- Revenue Metrics
+- Enrollment Trends
+- State Performance Analytics
 
 ### Program Analytics
 
 - Program Enrollment
 - Completion Rate
 - Placement Rate
+- Revenue by Program
+- Average Training Duration
 
 ### Placement Analytics
 
 - Placement Performance
 - Top Employers
 - Salary Distribution
+- Program Placement Comparison
 
 ### Funding Analytics
 
 - Funding Source Performance
 - Revenue Analysis
+- Completion Rate by Funding Source
+- Placement Rate by Funding Source
 
 ### Career Center Analytics
 
 - Career Center Performance
 - Coordinator Performance
+- Student Distribution
+- Completion and Placement Outcomes
 
 ### AI Assistant
 
-Natural Language Question Interface
+The AI Assistant provides a natural-language analytics interface that translates business questions into SQL-driven insights.
 
-Examples:
+Supported questions include:
 
 - total students
 - placement rate
 - completion rate
-- top employers
 - students by state
+- top employers
+- largest program
+- largest state
+- largest funding source
+- revenue by program
+- placement by state
+- completion by state
 
-## Technology Stack
+The current version uses a rule-based query engine and serves as the foundation for future AI-powered SQL generation.
 
-- Python
-- Pandas
-- SQLite
-- SQL
-- Streamlit
+---
 
-## Future Enhancements
+## FastAPI Backend
 
-- Azure SQL Database
-- Azure OpenAI
-- Automatic SQL Generation
-- Advanced Predictive Analytics
+Version 1.0 includes a FastAPI backend that exposes analytics data through REST APIs.
+
+Current functionality includes:
+
+### API Endpoints
+
+#### General
