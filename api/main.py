@@ -1,6 +1,17 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, Query
+
 from api.database import get_connection
+from api.models import (
+    FundingSummaryResponse,
+    ProgramRequest,
+    ProgramSearchResponse,
+    ProgramSummaryResponse,
+    QuestionRequest,
+    QuestionResponse,
+    StateSummaryResponse,
+    StudentCountResponse,
+)
+
 from utils.sql_resolver import resolve_question
 
 app = FastAPI(
@@ -9,29 +20,27 @@ app = FastAPI(
     version="1.0.0"
 )
 
+
+# ============================================================
+# HELPER FUNCTION
+# ============================================================
+
 def rows_to_dicts(cursor, rows):
-    column_names = []
 
-    for column in cursor.description:
-        column_names.append(column[0])
+    column_names = [
+        column[0]
+        for column in cursor.description
+    ]
 
-    results = []
+    return [
+        dict(zip(column_names, row))
+        for row in rows
+    ]
 
-    for row in rows:
-        record = dict(zip(column_names, row))
-        results.append(record)
 
-    return results
-
-class StudentRequest(BaseModel):
-    program: str
-    state: str
-
-class ProgramRequest(BaseModel):
-    program: str
-
-class QuestionRequest(BaseModel):
-    question: str
+# ============================================================
+# HOME
+# ============================================================
 
 @app.get("/")
 def home():
@@ -42,134 +51,157 @@ def home():
     }
 
 
-@app.get("/students")
-def students():
+# ============================================================
+# STUDENTS
+# ============================================================
+
+@app.get(
+    "/students",
+    response_model=StudentCountResponse
+)
+def get_students():
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        SELECT COUNT(Program)
+    try:
+
+        cursor.execute("""
+        SELECT COUNT(*)
         FROM training_data
-        """
+        """)
+
+        total_students = cursor.fetchone()[0]
+
+        return {
+            "total_students": total_students
+        }
+
+    finally:
+
+        conn.close()
+
+
+# ============================================================
+# PROGRAM SUMMARY
+# ============================================================
+
+@app.get(
+    "/program_summary",
+    response_model=list[ProgramSummaryResponse]
+)
+def get_program_summary():
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+        SELECT *
+        FROM program_summary
+        ORDER BY TotalStudents DESC
+        """)
+
+        rows = cursor.fetchall()
+
+        return rows_to_dicts(
+            cursor,
+            rows
+        )
+
+    finally:
+
+        conn.close()
+
+
+# ============================================================
+# STATE SUMMARY
+# ============================================================
+
+@app.get(
+    "/state_summary",
+    response_model=list[StateSummaryResponse]
+)
+def get_state_summary():
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+        SELECT *
+        FROM state_summary
+        ORDER BY TotalStudents DESC
+        """)
+
+        rows = cursor.fetchall()
+
+        return rows_to_dicts(
+            cursor,
+            rows
+        )
+
+    finally:
+
+        conn.close()
+
+
+# ============================================================
+# FUNDING SUMMARY
+# ============================================================
+
+@app.get(
+    "/funding_summary",
+    response_model=list[FundingSummaryResponse]
+)
+def get_funding_summary():
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+        SELECT *
+        FROM funding_summary
+        ORDER BY TotalStudents DESC
+        """)
+
+        rows = cursor.fetchall()
+
+        return rows_to_dicts(
+            cursor,
+            rows
+        )
+
+    finally:
+
+        conn.close()
+
+
+# ============================================================
+# TOP PROGRAMS
+# ============================================================
+
+@app.get("/programs")
+def get_programs(
+
+    limit: int = Query(
+        default=10,
+        ge=1,
+        le=100
     )
 
-    total = cursor.fetchone()[0]
-
-    conn.close()
-
-    return {
-        "total_students": total
-    }
-
-@app.get("/program_summary")
-def program_summary():
-
-    conn = get_connection()
-
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    SELECT *
-    FROM program_summary
-    ORDER BY TotalStudents DESC
-    """)
-
-    columns = [
-        column[0]
-        for column in cursor.description
-    ]
-
-    rows = cursor.fetchall()
-
-    result = [
-        dict(zip(columns, row))
-        for row in rows
-    ]
-
-    conn.close()
-
-    return result
-
-@app.get("/state_summary")
-def state_summary():
-
-    conn = get_connection()
-
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    SELECT *
-    FROM state_summary
-    ORDER BY TotalStudents DESC
-    """)
-
-    columns = [
-        column[0]
-        for column in cursor.description
-    ]
-
-    rows = cursor.fetchall()
-
-    result = [
-        dict(zip(columns, row))
-        for row in rows
-    ]
-
-    conn.close()
-
-    return result
-
-@app.get("/funding_summary")
-def funding_summary():
-
-    conn = get_connection()
-
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    SELECT *
-    FROM funding_summary
-    ORDER BY TotalStudents DESC
-    """)
-
-    columns = [
-        column[0]
-        for column in cursor.description
-    ]
-
-    rows = cursor.fetchall()
-
-    result = [
-        dict(zip(columns, row))
-        for row in rows
-    ]
-
-    conn.close()
-
-    return result
-
-
-##### POST Endpoint
-
-@app.post("/analyze")
-def analyze_student(request: StudentRequest):
-
-    return {
-        "program": request.program,
-        "state": request.state,
-        "message": "Request received successfully"
-    }
-
-@app.post("/program_details")
-def program_details(request: ProgramRequest):
+):
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
+    try:
+
+        cursor.execute("""
         SELECT
             Program,
             TotalStudents,
@@ -178,46 +210,147 @@ def program_details(request: ProgramRequest):
             Revenue,
             AvgTrainingDays
         FROM program_summary
-        WHERE LOWER(TRIM(Program)) LIKE LOWER(?)
+        ORDER BY TotalStudents DESC
+        LIMIT ?
+        """,
+        (limit,)
+        )
+
+        rows = cursor.fetchall()
+
+        return {
+            "count": len(rows),
+            "programs": rows_to_dicts(
+                cursor,
+                rows
+            )
+        }
+
+    finally:
+
+        conn.close()
+
+
+# ============================================================
+# PROGRAM SEARCH
+# ============================================================
+
+@app.get("/program/{program_name}")
+def get_program(program_name: str):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+        SELECT
+            Program,
+            TotalStudents,
+            CompletionRate,
+            PlacementRate,
+            Revenue,
+            AvgTrainingDays
+        FROM program_summary
+        WHERE LOWER(TRIM(Program))
+              LIKE LOWER(?)
+        """,
+        (f"%{program_name.strip()}%",)
+        )
+
+        rows = cursor.fetchall()
+
+        if not rows:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Program not found"
+            )
+
+        return {
+            "search_term": program_name,
+            "match_count": len(rows),
+            "programs": rows_to_dicts(
+                cursor,
+                rows
+            )
+        }
+
+    finally:
+
+        conn.close()
+
+
+# ============================================================
+# PROGRAM DETAILS POST
+# ============================================================
+
+@app.post(
+    "/program_details",
+    response_model=ProgramSearchResponse
+)
+def program_details(request: ProgramRequest):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+        SELECT
+            Program,
+            TotalStudents,
+            CompletionRate,
+            PlacementRate,
+            Revenue,
+            AvgTrainingDays
+        FROM program_summary
+        WHERE LOWER(TRIM(Program))
+              LIKE LOWER(?)
         ORDER BY TotalStudents DESC
         """,
         (f"%{request.program.strip()}%",)
-    )
-
-    rows = cursor.fetchall()
-
-    if not rows:
-        conn.close()
-
-        raise HTTPException(
-            status_code=404,
-            detail=f"No program found containing '{request.program}'"
         )
 
-    column_names = [
-        column[0]
-        for column in cursor.description
-    ]
+        rows = cursor.fetchall()
 
-    results = [
-        dict(zip(column_names, row))
-        for row in rows
-    ]
+        if not rows:
 
-    conn.close()
+            raise HTTPException(
+                status_code=404,
+                detail=f"No program found containing '{request.program}'"
+            )
 
-    return {
-        "search_term": request.program,
-        "match_count": len(results),
-        "programs": results
-    }
+        results = rows_to_dicts(
+            cursor,
+            rows
+        )
 
-@app.post("/question")
+        return {
+            "search_term": request.program,
+            "match_count": len(results),
+            "programs": results
+        }
+
+    finally:
+
+        conn.close()
+
+
+# ============================================================
+# ANALYTICS QUESTION
+# ============================================================
+
+@app.post(
+    "/question",
+    response_model=QuestionResponse
+)
 def answer_question(request: QuestionRequest):
 
     question = request.question.strip()
 
     if not question:
+
         raise HTTPException(
             status_code=400,
             detail="Question cannot be empty"
@@ -226,6 +359,7 @@ def answer_question(request: QuestionRequest):
     sql_query = resolve_question(question)
 
     if sql_query is None:
+
         raise HTTPException(
             status_code=400,
             detail="Question is not currently supported"
@@ -235,31 +369,29 @@ def answer_question(request: QuestionRequest):
     cursor = conn.cursor()
 
     try:
+
         cursor.execute(sql_query)
 
         rows = cursor.fetchall()
 
-        column_names = [
-            column[0]
-            for column in cursor.description
-        ]
+        results = rows_to_dicts(
+            cursor,
+            rows
+        )
 
-        results = [
-            dict(zip(column_names, row))
-            for row in rows
-        ]
+        return {
+            "question": question,
+            "result_count": len(results),
+            "results": results
+        }
 
     except Exception as error:
+
         raise HTTPException(
             status_code=500,
             detail=f"Database query failed: {str(error)}"
         )
 
     finally:
-        conn.close()
 
-    return {
-        "question": question,
-        "result_count": len(results),
-        "results": results
-    }
+        conn.close()
